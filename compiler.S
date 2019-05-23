@@ -8,6 +8,11 @@
 .global handleop
 .global _convert
 .global lastop
+.global setknobs
+.global basename
+.global mstrlen
+.global saveit
+.global num_frames
 .data
     .align 32
     lastsym: .quad 0
@@ -87,7 +92,6 @@
     movq $0, 24(%rdi)
 .endm
 .text
-//SYMTAB pseudo-struct: char* name, long int type, union data (either a pointer to light,constants, or matrix) or a double
 .macro nthpass n
     cmp $\n, %rdx
     jne pass
@@ -104,6 +108,7 @@ handleop://raxth element of symtab
     .comment:
     ret
     .doubleval:
+    ret
     .light:
     nthpass 2
     vmovupd 16(%rdi), %ymm0
@@ -174,9 +179,13 @@ handleop://raxth element of symtab
     applyedges
     ret
     .csval:
+    ret
     .mesh:
+    ret
     .texture:
+    ret
     .stringval:
+    ret
     .setval:
     ret
     .move:
@@ -235,7 +244,9 @@ handleop://raxth element of symtab
     call mstrcpy
     ret
     .save_knobs:
+    ret
     .tween:
+    ret
     .frames:
     nthpass 0
     vmovsd 8(%rdi), %xmm0//okay here is our symtab struct
@@ -259,27 +270,23 @@ handleop://raxth element of symtab
     vdivsd %xmm5, %xmm4, %xmm4
     vcvtsd2si %xmm0, %rax
     vcvtsd2si %xmm5, %rdi
- 
     mov $144, %r11
     imul %rax, %r11
     add nodes(%rip), %r11
-    eachframe:
-    //rdi is our counter
+    eachframe: //rdi is our counter
     mov %r11, %rsi
     checknewone:
     mov 136(%rsi), %rcx
     test %rcx, %rcx
     cmovnz %rcx, %rsi
     jnz checknewone
-
     push %r11
     push %r10
     push %rsi
     push %rdi
-    mov %r10, %rdi
-    add $136, %rsi
-    call mstrcpy
     vmovsd %xmm2, 128(%rsi)
+    mov %r10, %rdi
+    call mstrcpy
     mov $144, %rdi
     mov $1, %rsi
     call calloc@PLT
@@ -288,19 +295,11 @@ handleop://raxth element of symtab
     pop %r10
     pop %r11
     mov %rax, 136(%rsi)
-
     vaddsd %xmm4, %xmm2, %xmm2
     add $144, %r11
     dec %rdi
     cmp $0, %rdi
     jge eachframe
-
-
-
-
-    
-    //check next knob
-    
     ret
     .push:
     nthpass 2
@@ -354,10 +353,15 @@ handleop://raxth element of symtab
     destroyfile
     ret
     .generate_rayfiles:
+    ret
     .shading:
+    ret
     .shading_type:
+    ret
     .setknobs:
+    ret
     .focal:
+    ret
     .display:
     nthpass 2
     lea name(%rip), %rdi
@@ -387,9 +391,9 @@ handleop://raxth element of symtab
     destroyfile
     ret
     .web:
+    ret
     .co:
     ret
-    //p *(double[12]*)((((double*[3])symtab)[2])+2)
 constantine:
     push %rdi
     mov 8(%rdi), %rdi
@@ -423,6 +427,22 @@ constantine:
     vmovupd Ksd(%rip), %ymm0
     vmovupd %ymm0, Ks(%rip)
     pop %rdi
+    ret
+setknobs: //frame num in rcx
+    mov nodes(%rip), %rdi
+    imul $144, %rcx
+    add %rcx, %rdi
+    nextknob:
+    vmovsd 128(%rdi), %xmm0
+    push %rdi
+    call lookup_symbol
+    mov %rax, %rdi
+    call set_value
+    pop %rdi
+    mov 136(%rdi), %rdi
+    mov 136(%rdi), %rsi
+    test %rsi, %rsi
+    jnz nextknob
     ret
 add_symbol://rdi: char^ name, rsi long int type, rdx void* data
     push %rdi
@@ -482,11 +502,13 @@ lookup_symbol://rdi char* name
     found:
     mov %rsi, %rax
     ret
-    
 set_value://rdi symtab* p , xmm0 double value
     movsd %xmm0, 16(%rdi)
     ret
-
+saveit:
+    lea basename(%rip), %rdi
+    call pr
+    ret
 mstrcmp:
     mov $-16, %rax
     compareloop:
@@ -505,7 +527,6 @@ mstrcmp:
     equal:
     xor %eax, %eax               # strings are equal
     ret
-
 mstrlen:
     mov %rdi, %rax
     mov %edi, %ecx
@@ -533,7 +554,6 @@ mstrlen:
     sub %rdi, %rax
     add %rdx, %rax
     ret
-
 mstrcpy://source in rdi, dest in rsi
     push %rdi
     push %rsi

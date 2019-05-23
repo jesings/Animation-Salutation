@@ -128,7 +128,5 @@ struct vary_node {
   struct vary_node *next;
 };
 
-void print_knobs();
-void process_knobs();
 extern struct command op[MAX_COMMANDS];
 #endif

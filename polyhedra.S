@@ -1,7 +1,7 @@
 .global makebox
 .global makesphere
 .global maketorus
-.set resolution,512
+.set resolution,16
 .set rresolution,resolution*resolution
 .set rresolution2,rresolution*2
 .data
@@ -134,7 +134,7 @@ quadrilateral://draws quadrilateral for another kind of shape
     movsd 16(%rsp), %xmm0
     call cos2
 .endm
-roundmatrix://0-19 phi in rdi, 0-19 theta in rsi, radius is in %xmm3, generates the points for a sphere
+roundmatrix://0-resolution phi in rdi, 0-resolution theta in rsi, radius is in %xmm3, generates the points for a sphere
     sub $32, %rsp
     movsd %xmm3, (%rsp)
     vcvtsi2sd %rsi, %xmm0, %xmm0

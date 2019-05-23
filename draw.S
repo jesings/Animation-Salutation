@@ -59,8 +59,8 @@ draw:
 
     xor %rax, %rax
     nextop:
-    mov $0, %rdx//0th pass
     push %rax
+    mov $0, %rdx//0th pass
     call handleop
     pop %rax
     inc %rax
@@ -69,24 +69,93 @@ draw:
 
     xor %rax, %rax
     nextop1:
-    mov $1, %rdx//0th pass
     push %rax
+    mov $1, %rdx//1st pass
     call handleop
     pop %rax
     inc %rax
     cmp lastop(%rip), %rax
     jl nextop1
 
+    mov num_frames(%rip), %rcx
+    test %rcx, %rcx
+    jz nofrills
+
+    lea basename(%rip), %rdi
+    call mstrlen
+    movb $0x30, (%rdi, %rax)
+    movb $0x30, 1(%rdi, %rax)
+    movb $0x2E, 2(%rdi, %rax)
+    movb $0x70, 3(%rdi, %rax)
+    movb $0x70, 4(%rdi, %rax)
+    movb $0x6d, 5(%rdi, %rax)
+
+
+    xor %rcx, %rcx
+    frameloop:
+    push %rcx
+    call setknobs
     xor %rax, %rax
     nextop2:
-    mov $2, %rdx//0th pass
     push %rax
+    mov $2, %rdx//2nd pass
     call handleop
     pop %rax
     inc %rax
     cmp lastop(%rip), %rax
     jl nextop2
+    lea basename(%rip), %rdi
+    call mstrlen
+    sub $6, %rax
+    lea basename(%rip), %rdi
+    mov (%rsp), %rcx
+    //get first 2 letters from A (0) to P (15), for a pseudo hex format
+    mov %rcx, %rdx
+    and $0b1111, %rcx
+    and $0b11110000, %rdx
+    shr $4, %rdx
+    addb $0x41, %cl
+    addb $0x41, %dl
+    //dl is first digit from 0 to 15, cl is second digit
+    mov %dl, (%rdi, %rax)
+    mov %cl, 1(%rdi, %rax)
+    call saveit
 
+    lea zbuffer(%rip), %rdi
+    mov minval(%rip), %rax
+    mov $262144, %rcx
+    rep stosq
+    lea data(%rip), %rdi
+    xor %rax, %rax
+    mov $131072, %rcx
+    rep stosq
+    
+    mov trim(%rip), %rdi
+    mov edgem(%rip), %rsi
+    movq $0, 24(%rdi)
+    movq $0, 24(%rsi)
+
+    mov cstop(%rip), %rdi
+    mov (%rdi), %rdi
+    call identitymatrix
+
+    pop %rcx
+    inc %rcx
+    cmp num_frames(%rip), %rcx
+    jl frameloop
+    jmp endfrills
+
+    nofrills:
+    xor %rax, %rax
+    nextop2n:
+    push %rax
+    mov $1, %rdx//0th pass
+    call handleop
+    pop %rax
+    inc %rax
+    cmp lastop(%rip), %rax
+    jl nextop2n
+    endfrills:
 
     mov edgem(%rip), %rdi
     call freematrix//free edge matrix
