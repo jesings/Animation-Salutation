@@ -3,6 +3,7 @@ allfiles=matrix.o draw.o edgy.o prgrid.o bresenham.o manipulations.o parametric.
 all: $(allfiles)
 	gcc -o $(executable) $(allfiles)
 	./$(executable) main.mdl
+	-rm *.ppm 2> /dev/null
 
 lex.yy.c: mdl.l y.tab.h 
 	flex -Id mdl.l

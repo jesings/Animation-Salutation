@@ -188,29 +188,40 @@ handleop://raxth element of symtab
     ret
     .setval:
     ret
+    .macro findknob where yorsh
+    mov \where(%rdi), %rsi
+    test %rsi, %rsi
+    vmovsd one(%rip), %xmm3
+    jz \yorsh
+    vmovsd 16(%rsi), %xmm3
+    \yorsh:
+    .endm
     .move:
     nthpass 2
-    vmovsd 8(%rdi), %xmm0
-    vmovsd 16(%rdi), %xmm1
-    vmovsd 24(%rdi), %xmm2
+    findknob 40 .moveyorsh
+    vmulsd 8(%rdi), %xmm3, %xmm0
+    vmulsd 16(%rdi), %xmm3, %xmm1
+    vmulsd 24(%rdi), %xmm3, %xmm2
     cspeek
     lea transform(%rip), %rax
     call genmanipulate
     ret
     .scale:
     nthpass 2
-    vmovsd 8(%rdi), %xmm0
-    vmovsd 16(%rdi), %xmm1
-    vmovsd 24(%rdi), %xmm2
+    findknob 40 .scaleyorsh
+    vmulsd 8(%rdi), %xmm3, %xmm0
+    vmulsd 16(%rdi), %xmm3, %xmm1
+    vmulsd 24(%rdi), %xmm3, %xmm2
     cspeek
     lea dilate(%rip), %rax
     call genmanipulate
     ret
     .rotate:
     nthpass 2
+    findknob 24 .rotateyorsh
     vmovsd 8(%rdi), %xmm0
     vcvtsd2si %xmm0, %rax
-    vmovsd 16(%rdi), %xmm0
+    vmulsd 16(%rdi), %xmm3, %xmm0
     push %rax
     push %rdx
     call deg2rad

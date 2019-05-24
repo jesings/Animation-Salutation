@@ -11,13 +11,7 @@ long int draw();
 long int mstrcmp(char* str1, char* str2);
 
 struct matrix* makematrix(long int cols, long int rows);
-struct matrix{
-    double* numbers;
-    long int rows;
-    long int cols;
-    long int lastcol;
-};
-
+struct matrix{ double* numbers; long int rows; long int cols; long int lastcol; };
   SYMTAB *s;
   struct light *l;
   struct constants *c;
